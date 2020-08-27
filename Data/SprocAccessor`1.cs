@@ -69,16 +69,6 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
       }
     }
 
-    public override IAsyncResult BeginExecute(
-      AsyncCallback callback,
-      object state,
-      params object[] parameterValues)
-    {
-      this.GuardAsyncAllowed();
-      using (DbCommand storedProcCommand = this.Database.GetStoredProcCommand(this.procedureName))
-        return this.BeginExecute(storedProcCommand, this.parameterMapper, callback, state, parameterValues);
-    }
-
     private class DefaultParameterMapper : IParameterMapper
     {
       private readonly Database database;

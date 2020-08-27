@@ -10,6 +10,7 @@ using System;
 using System.Data;
 using System.Data.Common;
 using System.Globalization;
+using System.Threading.Tasks;
 using System.Transactions;
 
 namespace Microsoft.Practices.EnterpriseLibrary.Data
@@ -272,6 +273,24 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
       }
     }
 
+    protected async Task<int> DoExecuteNonQueryAsync(DbCommand command)
+    {
+        if (command == null)
+            throw new ArgumentNullException(nameof(command));
+        try
+        {
+            DateTime now = DateTime.Now;
+            int num = await command.ExecuteNonQueryAsync();
+            this.instrumentationProvider.FireCommandExecutedEvent(now);
+            return num;
+        }
+        catch (Exception ex)
+        {
+            this.instrumentationProvider.FireCommandFailedEvent(command.CommandText, this.ConnectionStringNoCredentials, ex);
+            throw;
+        }
+    }
+
     private IDataReader DoExecuteReader(DbCommand command, CommandBehavior cmdBehavior)
     {
       try
@@ -286,6 +305,22 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
         this.instrumentationProvider.FireCommandFailedEvent(command.CommandText, this.ConnectionStringNoCredentials, ex);
         throw;
       }
+    }
+
+    private async Task<IDataReader> DoExecuteReaderAsync(DbCommand command, CommandBehavior cmdBehavior)
+    {
+        try
+        {
+            DateTime now = DateTime.Now;
+            IDataReader dataReader = (IDataReader) await command.ExecuteReaderAsync(cmdBehavior);
+            this.instrumentationProvider.FireCommandExecutedEvent(now);
+            return dataReader;
+        }
+        catch (Exception ex)
+        {
+            this.instrumentationProvider.FireCommandFailedEvent(command.CommandText, this.ConnectionStringNoCredentials, ex);
+            throw;
+        }
     }
 
     private object DoExecuteScalar(IDbCommand command)
@@ -444,16 +479,37 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
       }
     }
 
+    public virtual async Task<int> ExecuteNonQueryAsync(DbCommand command)
+    {
+        using (DatabaseConnectionWrapper openConnection = this.GetOpenConnection())
+        {
+            Database.PrepareCommand(command, openConnection.Connection);
+            return await this.DoExecuteNonQueryAsync(command);
+        }
+    }
+
     public virtual int ExecuteNonQuery(DbCommand command, DbTransaction transaction)
     {
       Database.PrepareCommand(command, transaction);
       return this.DoExecuteNonQuery(command);
     }
 
+    public virtual async Task<int> ExecuteNonQueryAsync(DbCommand command, DbTransaction transaction)
+    {
+        Database.PrepareCommand(command, transaction);
+        return await this.DoExecuteNonQueryAsync(command);
+    }
+
     public virtual int ExecuteNonQuery(string storedProcedureName, params object[] parameterValues)
     {
-      using (DbCommand storedProcCommand = this.GetStoredProcCommand(storedProcedureName, parameterValues))
+        using (DbCommand storedProcCommand = this.GetStoredProcCommand(storedProcedureName, parameterValues))
         return this.ExecuteNonQuery(storedProcCommand);
+    }
+
+    public virtual async Task<int> ExecuteNonQueryAsync(string storedProcedureName, params object[] parameterValues)
+    {
+        using (DbCommand storedProcCommand = this.GetStoredProcCommand(storedProcedureName, parameterValues))
+        return await this.ExecuteNonQueryAsync(storedProcCommand);
     }
 
     public virtual int ExecuteNonQuery(
@@ -465,10 +521,25 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
         return this.ExecuteNonQuery(storedProcCommand, transaction);
     }
 
+    public virtual async Task<int> ExecuteNonQueryAsync(
+        DbTransaction transaction,
+        string storedProcedureName,
+        params object[] parameterValues)
+    {
+        using (DbCommand storedProcCommand = this.GetStoredProcCommand(storedProcedureName, parameterValues))
+        return await this.ExecuteNonQueryAsync(storedProcCommand, transaction);
+    }
+
     public virtual int ExecuteNonQuery(CommandType commandType, string commandText)
     {
       using (DbCommand commandByCommandType = this.CreateCommandByCommandType(commandType, commandText))
         return this.ExecuteNonQuery(commandByCommandType);
+    }
+
+    public virtual async Task<int> ExecuteNonQueryAsync(CommandType commandType, string commandText)
+    {
+        using (DbCommand commandByCommandType = this.CreateCommandByCommandType(commandType, commandText))
+        return await this.ExecuteNonQueryAsync(commandByCommandType);
     }
 
     public virtual int ExecuteNonQuery(
@@ -476,10 +547,18 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
       CommandType commandType,
       string commandText)
     {
-      using (DbCommand commandByCommandType = this.CreateCommandByCommandType(commandType, commandText))
+        using (DbCommand commandByCommandType = this.CreateCommandByCommandType(commandType, commandText))
         return this.ExecuteNonQuery(commandByCommandType, transaction);
     }
 
+    public virtual async Task<int> ExecuteNonQueryAsync(
+        DbTransaction transaction,
+        CommandType commandType,
+        string commandText)
+    {
+        using (DbCommand commandByCommandType = this.CreateCommandByCommandType(commandType, commandText))
+        return await this.ExecuteNonQueryAsync(commandByCommandType, transaction);
+    }
     public virtual IDataReader ExecuteReader(DbCommand command)
     {
       using (DatabaseConnectionWrapper openConnection = this.GetOpenConnection())
@@ -490,6 +569,15 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
       }
     }
 
+    public virtual async Task<IDataReader> ExecuteReaderAsync(DbCommand command)
+    {
+        using (DatabaseConnectionWrapper openConnection = this.GetOpenConnection())
+        {
+            Database.PrepareCommand(command, openConnection.Connection);
+            IDataReader innerReader = await this.DoExecuteReaderAsync(command, CommandBehavior.Default);
+            return this.CreateWrappedReader(openConnection, innerReader);
+        }
+    }
     protected virtual IDataReader CreateWrappedReader(
       DatabaseConnectionWrapper connection,
       IDataReader innerReader)
@@ -505,27 +593,58 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
       return this.DoExecuteReader(command, CommandBehavior.Default);
     }
 
+    public virtual async Task<IDataReader> ExecuteReaderAsync(
+        DbCommand command,
+        DbTransaction transaction)
+    {
+        Database.PrepareCommand(command, transaction);
+        return await this.DoExecuteReaderAsync(command, CommandBehavior.Default);
+    }
+
     public IDataReader ExecuteReader(
       string storedProcedureName,
       params object[] parameterValues)
     {
-      using (DbCommand storedProcCommand = this.GetStoredProcCommand(storedProcedureName, parameterValues))
+        using (DbCommand storedProcCommand = this.GetStoredProcCommand(storedProcedureName, parameterValues))
         return this.ExecuteReader(storedProcCommand);
     }
 
+    public async Task<IDataReader> ExecuteReaderAsync(
+            string storedProcedureName,
+            params object[] parameterValues)
+    {
+        using (DbCommand storedProcCommand = this.GetStoredProcCommand(storedProcedureName, parameterValues))
+        return await this.ExecuteReaderAsync(storedProcCommand);
+    }
+    
     public IDataReader ExecuteReader(
       DbTransaction transaction,
       string storedProcedureName,
       params object[] parameterValues)
     {
-      using (DbCommand storedProcCommand = this.GetStoredProcCommand(storedProcedureName, parameterValues))
+        using (DbCommand storedProcCommand = this.GetStoredProcCommand(storedProcedureName, parameterValues))
         return this.ExecuteReader(storedProcCommand, transaction);
+    }
+
+    public async Task<IDataReader> ExecuteReaderAsync(
+        DbTransaction transaction,
+        string storedProcedureName,
+        params object[] parameterValues)
+    {
+        using (DbCommand storedProcCommand = this.GetStoredProcCommand(storedProcedureName, parameterValues))
+        return await this.ExecuteReaderAsync(storedProcCommand, transaction);
     }
 
     public IDataReader ExecuteReader(CommandType commandType, string commandText)
     {
-      using (DbCommand commandByCommandType = this.CreateCommandByCommandType(commandType, commandText))
+        using (DbCommand commandByCommandType = this.CreateCommandByCommandType(commandType, commandText))
         return this.ExecuteReader(commandByCommandType);
+    }
+
+    public async Task<IDataReader> ExecuteReaderAsync(CommandType commandType, string commandText)
+    {
+        using (DbCommand commandByCommandType = this.CreateCommandByCommandType(commandType, commandText))
+        return await this.ExecuteReaderAsync(commandByCommandType);
     }
 
     public IDataReader ExecuteReader(
@@ -533,8 +652,17 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
       CommandType commandType,
       string commandText)
     {
-      using (DbCommand commandByCommandType = this.CreateCommandByCommandType(commandType, commandText))
+        using (DbCommand commandByCommandType = this.CreateCommandByCommandType(commandType, commandText))
         return this.ExecuteReader(commandByCommandType, transaction);
+    }
+
+    public async Task<IDataReader> ExecuteReaderAsync(
+        DbTransaction transaction,
+        CommandType commandType,
+        string commandText)
+    {
+        using (DbCommand commandByCommandType = this.CreateCommandByCommandType(commandType, commandText))
+        return await this.ExecuteReaderAsync(commandByCommandType, transaction);
     }
 
     public virtual object ExecuteScalar(DbCommand command)
@@ -898,219 +1026,18 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
       return this.UpdateDataSet(dataSet, tableName, insertCommand, updateCommand, deleteCommand, transaction, new int?());
     }
 
-    public virtual bool SupportsAsync
-    {
-      get
-      {
-        return false;
-      }
-    }
+    //public virtual bool SupportsAsync
+    //{
+    //  get
+    //  {
+    //    return false;
+    //  }
+    //}
 
-    public virtual IAsyncResult BeginExecuteNonQuery(
-      DbCommand command,
-      AsyncCallback callback,
-      object state)
-    {
-      this.AsyncNotSupported();
-      return (IAsyncResult) null;
-    }
-
-    public virtual IAsyncResult BeginExecuteNonQuery(
-      DbCommand command,
-      DbTransaction transaction,
-      AsyncCallback callback,
-      object state)
-    {
-      this.AsyncNotSupported();
-      return (IAsyncResult) null;
-    }
-
-    public virtual IAsyncResult BeginExecuteNonQuery(
-      string storedProcedureName,
-      AsyncCallback callback,
-      object state,
-      params object[] parameterValues)
-    {
-      this.AsyncNotSupported();
-      return (IAsyncResult) null;
-    }
-
-    public virtual IAsyncResult BeginExecuteNonQuery(
-      DbTransaction transaction,
-      string storedProcedureName,
-      AsyncCallback callback,
-      object state,
-      params object[] parameterValues)
-    {
-      this.AsyncNotSupported();
-      return (IAsyncResult) null;
-    }
-
-    public virtual IAsyncResult BeginExecuteNonQuery(
-      CommandType commandType,
-      string commandText,
-      AsyncCallback callback,
-      object state)
-    {
-      this.AsyncNotSupported();
-      return (IAsyncResult) null;
-    }
-
-    public virtual IAsyncResult BeginExecuteNonQuery(
-      DbTransaction transaction,
-      CommandType commandType,
-      string commandText,
-      AsyncCallback callback,
-      object state)
-    {
-      this.AsyncNotSupported();
-      return (IAsyncResult) null;
-    }
-
-    public virtual int EndExecuteNonQuery(IAsyncResult asyncResult)
-    {
-      this.AsyncNotSupported();
-      return 0;
-    }
-
-    public virtual IAsyncResult BeginExecuteReader(
-      DbCommand command,
-      AsyncCallback callback,
-      object state)
-    {
-      this.AsyncNotSupported();
-      return (IAsyncResult) null;
-    }
-
-    public virtual IAsyncResult BeginExecuteReader(
-      DbCommand command,
-      DbTransaction transaction,
-      AsyncCallback callback,
-      object state)
-    {
-      this.AsyncNotSupported();
-      return (IAsyncResult) null;
-    }
-
-    public virtual IAsyncResult BeginExecuteReader(
-      string storedProcedureName,
-      AsyncCallback callback,
-      object state,
-      params object[] parameterValues)
-    {
-      this.AsyncNotSupported();
-      return (IAsyncResult) null;
-    }
-
-    public virtual IAsyncResult BeginExecuteReader(
-      DbTransaction transaction,
-      string storedProcedureName,
-      AsyncCallback callback,
-      object state,
-      params object[] parameterValues)
-    {
-      this.AsyncNotSupported();
-      return (IAsyncResult) null;
-    }
-
-    public virtual IAsyncResult BeginExecuteReader(
-      CommandType commandType,
-      string commandText,
-      AsyncCallback callback,
-      object state)
-    {
-      this.AsyncNotSupported();
-      return (IAsyncResult) null;
-    }
-
-    public virtual IAsyncResult BeginExecuteReader(
-      DbTransaction transaction,
-      CommandType commandType,
-      string commandText,
-      AsyncCallback callback,
-      object state)
-    {
-      this.AsyncNotSupported();
-      return (IAsyncResult) null;
-    }
-
-    public virtual IDataReader EndExecuteReader(IAsyncResult asyncResult)
-    {
-      this.AsyncNotSupported();
-      return (IDataReader) null;
-    }
-
-    public virtual IAsyncResult BeginExecuteScalar(
-      DbCommand command,
-      AsyncCallback callback,
-      object state)
-    {
-      this.AsyncNotSupported();
-      return (IAsyncResult) null;
-    }
-
-    public virtual IAsyncResult BeginExecuteScalar(
-      DbCommand command,
-      DbTransaction transaction,
-      AsyncCallback callback,
-      object state)
-    {
-      this.AsyncNotSupported();
-      return (IAsyncResult) null;
-    }
-
-    public virtual IAsyncResult BeginExecuteScalar(
-      string storedProcedureName,
-      AsyncCallback callback,
-      object state,
-      params object[] parameterValues)
-    {
-      this.AsyncNotSupported();
-      return (IAsyncResult) null;
-    }
-
-    public virtual IAsyncResult BeginExecuteScalar(
-      DbTransaction transaction,
-      string storedProcedureName,
-      AsyncCallback callback,
-      object state,
-      params object[] parameterValues)
-    {
-      this.AsyncNotSupported();
-      return (IAsyncResult) null;
-    }
-
-    public virtual IAsyncResult BeginExecuteScalar(
-      CommandType commandType,
-      string commandText,
-      AsyncCallback callback,
-      object state)
-    {
-      this.AsyncNotSupported();
-      return (IAsyncResult) null;
-    }
-
-    public virtual IAsyncResult BeginExecuteScalar(
-      DbTransaction transaction,
-      CommandType commandType,
-      string commandText,
-      AsyncCallback callback,
-      object state)
-    {
-      this.AsyncNotSupported();
-      return (IAsyncResult) null;
-    }
-
-    public virtual object EndExecuteScalar(IAsyncResult asyncResult)
-    {
-      this.AsyncNotSupported();
-      return (object) null;
-    }
-
-    private void AsyncNotSupported()
-    {
-      throw new InvalidOperationException(string.Format((IFormatProvider) CultureInfo.CurrentCulture, Resources.AsyncOperationsNotSupported, (object) this.GetType().Name));
-    }
+    //private void AsyncNotSupported()
+    //{
+    //  throw new InvalidOperationException(string.Format((IFormatProvider) CultureInfo.CurrentCulture, Resources.AsyncOperationsNotSupported, (object) this.GetType().Name));
+    //}
 
     protected virtual int UserParametersStartIndex()
     {

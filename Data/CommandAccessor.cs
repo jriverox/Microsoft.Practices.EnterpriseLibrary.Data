@@ -50,29 +50,6 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
         yield return map;
     }
 
-    protected IAsyncResult BeginExecute(
-      DbCommand command,
-      IParameterMapper parameterMapper,
-      AsyncCallback callback,
-      object state,
-      object[] parameterValues)
-    {
-      parameterMapper.AssignParameters(command, parameterValues);
-      return this.database.BeginExecuteReader(command, callback, state);
-    }
-
-    public override IEnumerable<TResult> EndExecute(IAsyncResult asyncResult)
-    {
-      this.GuardAsyncAllowed();
-      return this.resultSetMapper.MapSet(this.database.EndExecuteReader(asyncResult));
-    }
-
-    protected void GuardAsyncAllowed()
-    {
-      if (!this.database.SupportsAsync)
-        throw new InvalidOperationException(string.Format((IFormatProvider) CultureInfo.CurrentCulture, Resources.AsyncOperationsNotSupported, (object) this.database.GetType().FullName));
-    }
-
     private class DefaultResultSetMapper : IResultSetMapper<TResult>
     {
       private readonly IRowMapper<TResult> rowMapper;
