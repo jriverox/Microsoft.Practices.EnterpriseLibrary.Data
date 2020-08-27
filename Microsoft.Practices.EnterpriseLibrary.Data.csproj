@@ -1,0 +1,157 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="Current" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--Project was exported from assembly: D:\source-code\Binaries-sb2\Microsoft.Practices.EnterpriseLibrary.Data.dll-->
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{32F8C759-BDB9-4E3E-A780-1BBE0BECBD9F}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AssemblyName>Microsoft.Practices.EnterpriseLibrary.Data</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <ApplicationVersion>5.0.414.0</ApplicationVersion>
+    <FileAlignment>512</FileAlignment>
+    <RootNamespace>Microsoft.Practices.EnterpriseLibrary</RootNamespace>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <OldToolsVersion>3.5</OldToolsVersion>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.Practices.EnterpriseLibrary.Common">
+      <HintPath>lib\Microsoft.Practices.EnterpriseLibrary.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.ServiceLocation">
+      <HintPath>lib\Microsoft.Practices.ServiceLocation.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.Unity">
+      <HintPath>lib\Microsoft.Practices.Unity.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Configuration.Install" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Data.OracleClient" />
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Common\Configuration\DatabaseProviderExtensions.cs" />
+    <Compile Include="Common\Configuration\DataConfigurationSourceBuilderExtensions.cs" />
+    <Compile Include="Data\CachingMechanism.cs" />
+    <Compile Include="Data\CommandAccessor.cs" />
+    <Compile Include="Data\DatabaseConnectionWrapper.cs" />
+    <Compile Include="Data\DatabaseExtensions.cs" />
+    <Compile Include="Data\DataReaderWrapper.cs" />
+    <Compile Include="Data\IParameterMapper.cs" />
+    <Compile Include="Data\IResultSetMapper.cs" />
+    <Compile Include="Data\IRowMapper.cs" />
+    <Compile Include="Data\DataAccessor.cs" />
+    <Compile Include="Data\MapBuilder.cs" />
+    <Compile Include="Data\IMapBuilderContext.cs" />
+    <Compile Include="Data\IMapBuilderContextMap.cs" />
+    <Compile Include="Data\IMapBuilderContextTest.cs" />
+    <Compile Include="Data\RefCountingDataReader.cs" />
+    <Compile Include="Data\ReflectionRowMapper`1.cs" />
+    <Compile Include="Data\PropertyMapping.cs" />
+    <Compile Include="Data\ColumnNameMapping.cs" />
+    <Compile Include="Data\FuncMapping.cs" />
+    <Compile Include="Data\SprocAccessor`1.cs" />
+    <Compile Include="Data\DatabaseProviderFactory.cs" />
+    <Compile Include="Data\ConnectionString.cs" />
+    <Compile Include="Data\Database.cs" />
+    <Compile Include="Data\DatabaseFactory.cs" />
+    <Compile Include="Data\GenericDatabase.cs" />
+    <Compile Include="Data\ParameterCache.cs" />
+    <Compile Include="Data\DaabAsyncResult.cs" />
+    <Compile Include="Data\SqlStringAccessor`1.cs" />
+    <Compile Include="Data\TransactionScopeConnections.cs" />
+    <Compile Include="Data\UpdateBehavior.cs" />
+    <Compile Include="Data\Properties\Resources.cs" />
+    <Compile Include="Data\Sql\SqlDatabase.cs" />
+    <Compile Include="Data\Sql\RefCountingXmlReader.cs" />
+    <Compile Include="Data\Sql\Configuration\SqlDatabaseData.cs" />
+    <Compile Include="Data\Oracle\IOraclePackage.cs" />
+    <Compile Include="Data\Oracle\OracleDatabase.cs" />
+    <Compile Include="Data\Oracle\ParameterTypeRegistry.cs" />
+    <Compile Include="Data\Oracle\OracleDataReaderWrapper.cs" />
+    <Compile Include="Data\Oracle\RefCountingOracleDataReaderWrapper.cs" />
+    <Compile Include="Data\Oracle\Configuration\DesignResources.cs" />
+    <Compile Include="Data\Oracle\Configuration\OracleDatabaseData.cs" />
+    <Compile Include="Data\Oracle\Configuration\OracleConnectionData.cs" />
+    <Compile Include="Data\Oracle\Configuration\OracleConnectionSettings.cs" />
+    <Compile Include="Data\Oracle\Configuration\OraclePackageData.cs" />
+    <Compile Include="Data\Configuration\DataAccessDesignTime.cs" />
+    <Compile Include="Data\Configuration\DesignResources.cs" />
+    <Compile Include="Data\Configuration\DatabaseData.cs" />
+    <Compile Include="Data\Configuration\DatabaseSettings.cs" />
+    <Compile Include="Data\Configuration\DatabaseSyntheticConfigSettings.cs" />
+    <Compile Include="Data\Configuration\DbProviderMapping.cs" />
+    <Compile Include="Data\Configuration\GenericDatabaseData.cs" />
+    <Compile Include="Data\Configuration\Fluent\IDatabaseAnotherDatabaseConfiguration.cs" />
+    <Compile Include="Data\Configuration\Fluent\AnotherDatabaseConfigurationExtensions.cs" />
+    <Compile Include="Data\Configuration\Fluent\DatabaseConfigurationExtension.cs" />
+    <Compile Include="Data\Configuration\Fluent\IDatabaseConfiguration.cs" />
+    <Compile Include="Data\Configuration\Fluent\IDatabaseConfigurationProperties.cs" />
+    <Compile Include="Data\Configuration\Fluent\IDatabaseConfigurationProviderEntry.cs" />
+    <Compile Include="Data\Configuration\Fluent\IDatabaseConfigurationProviders.cs" />
+    <Compile Include="Data\Configuration\Fluent\IDatabaseDefaultConnectionString.cs" />
+    <Compile Include="Data\Configuration\Fluent\IDatabaseProviderExtensionContext.cs" />
+    <Compile Include="Data\Configuration\Fluent\IDataConfiguration.cs" />
+    <Compile Include="Data\Configuration\Fluent\IDatabaseProviderConfiguration.cs" />
+    <Compile Include="Data\Configuration\Fluent\IOdbcDatabaseConfiguration.cs" />
+    <Compile Include="Data\Configuration\Fluent\OdbcConfigurationExtension.cs" />
+    <Compile Include="Data\Configuration\Fluent\IOleDbDatabaseConfiguration.cs" />
+    <Compile Include="Data\Configuration\Fluent\OleDbConfigurationExtension.cs" />
+    <Compile Include="Data\Configuration\Fluent\IDatabaseOracleConfiguration.cs" />
+    <Compile Include="Data\Configuration\Fluent\IDatabaseOraclePackageConfiguration.cs" />
+    <Compile Include="Data\Configuration\Fluent\OracleConfigurationExtension.cs" />
+    <Compile Include="Data\Configuration\Fluent\IDatabaseSqlCeDatabaseConfiguration.cs" />
+    <Compile Include="Data\Configuration\Fluent\SqlCeDatabaseConfigurationExtension.cs" />
+    <Compile Include="Data\Configuration\Fluent\IDatabaseSqlDatabaseConfiguration.cs" />
+    <Compile Include="Data\Configuration\Fluent\SqlDatabaseConfigurationExtension.cs" />
+    <Compile Include="Data\Configuration\Unity\DataAccessBlockExtension.cs" />
+    <Compile Include="Data\Configuration\Manageability\ConnectionStringsManageabilityProvider.cs" />
+    <Compile Include="Data\Configuration\Manageability\DatabaseSettingsManageabilityProvider.cs" />
+    <Compile Include="Data\Configuration\Manageability\OracleConnectionSettingsManageabilityProvider.cs" />
+    <Compile Include="Data\Configuration\Manageability\Properties\Resources.cs" />
+    <Compile Include="Data\Instrumentation\IDataInstrumentationProvider.cs" />
+    <Compile Include="Data\Instrumentation\NewDataInstrumentationProvider.cs" />
+    <Compile Include="Data\Instrumentation\NullDataInstrumentationProvider.cs" />
+    <Compile Include="Data\Instrumentation\DefaultDataEventLogger.cs" />
+    <Compile Include="Data\Instrumentation\DataInstrumentationInstaller.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Data\Configuration\DesignResources.resx" />
+    <EmbeddedResource Include="Data\Configuration\Manageability\Properties\Resources.resx" />
+    <EmbeddedResource Include="Data\Oracle\Configuration\DesignResources.resx" />
+    <EmbeddedResource Include="Data\Properties\Resources.resx" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
