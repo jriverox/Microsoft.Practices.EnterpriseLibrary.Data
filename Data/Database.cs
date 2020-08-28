@@ -307,12 +307,12 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
       }
     }
 
-    private async Task<IDataReader> DoExecuteReaderAsync(DbCommand command, CommandBehavior cmdBehavior)
+    private async Task<DbDataReader> DoExecuteReaderAsync(DbCommand command, CommandBehavior cmdBehavior)
     {
         try
         {
             DateTime now = DateTime.Now;
-            IDataReader dataReader = (IDataReader) await command.ExecuteReaderAsync(cmdBehavior);
+            var dataReader = await command.ExecuteReaderAsync(cmdBehavior);
             this.instrumentationProvider.FireCommandExecutedEvent(now);
             return dataReader;
         }
@@ -569,13 +569,14 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
       }
     }
 
-    public virtual async Task<IDataReader> ExecuteReaderAsync(DbCommand command)
+    public virtual async Task<DbDataReader> ExecuteReaderAsync(DbCommand command)
     {
         using (DatabaseConnectionWrapper openConnection = this.GetOpenConnection())
         {
             Database.PrepareCommand(command, openConnection.Connection);
-            IDataReader innerReader = await this.DoExecuteReaderAsync(command, CommandBehavior.Default);
-            return this.CreateWrappedReader(openConnection, innerReader);
+            DbDataReader innerReader = await this.DoExecuteReaderAsync(command, CommandBehavior.Default);
+
+            return this.CreateWrappedReaderForAsync(openConnection, innerReader);
         }
     }
     protected virtual IDataReader CreateWrappedReader(
@@ -585,6 +586,12 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
       return (IDataReader) new RefCountingDataReader(connection, innerReader);
     }
 
+    protected virtual DbDataReader CreateWrappedReaderForAsync(
+        DatabaseConnectionWrapper connection,
+        DbDataReader innerReader)
+    {
+        return (DbDataReader) new RefCountingDataReaderForAsync(connection, innerReader);
+    }
     public virtual IDataReader ExecuteReader(
       DbCommand command,
       DbTransaction transaction)
@@ -593,7 +600,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
       return this.DoExecuteReader(command, CommandBehavior.Default);
     }
 
-    public virtual async Task<IDataReader> ExecuteReaderAsync(
+    public virtual async Task<DbDataReader> ExecuteReaderAsync(
         DbCommand command,
         DbTransaction transaction)
     {
@@ -609,7 +616,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
         return this.ExecuteReader(storedProcCommand);
     }
 
-    public async Task<IDataReader> ExecuteReaderAsync(
+    public async Task<DbDataReader> ExecuteReaderAsync(
             string storedProcedureName,
             params object[] parameterValues)
     {
@@ -626,7 +633,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
         return this.ExecuteReader(storedProcCommand, transaction);
     }
 
-    public async Task<IDataReader> ExecuteReaderAsync(
+    public async Task<DbDataReader> ExecuteReaderAsync(
         DbTransaction transaction,
         string storedProcedureName,
         params object[] parameterValues)
@@ -641,7 +648,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
         return this.ExecuteReader(commandByCommandType);
     }
 
-    public async Task<IDataReader> ExecuteReaderAsync(CommandType commandType, string commandText)
+    public async Task<DbDataReader> ExecuteReaderAsync(CommandType commandType, string commandText)
     {
         using (DbCommand commandByCommandType = this.CreateCommandByCommandType(commandType, commandText))
         return await this.ExecuteReaderAsync(commandByCommandType);
@@ -656,7 +663,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
         return this.ExecuteReader(commandByCommandType, transaction);
     }
 
-    public async Task<IDataReader> ExecuteReaderAsync(
+    public async Task<DbDataReader> ExecuteReaderAsync(
         DbTransaction transaction,
         CommandType commandType,
         string commandText)

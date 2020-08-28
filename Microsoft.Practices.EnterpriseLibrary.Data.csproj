@@ -65,6 +65,7 @@
     <Compile Include="Data\CommandAccessor.cs" />
     <Compile Include="Data\DatabaseConnectionWrapper.cs" />
     <Compile Include="Data\DatabaseExtensions.cs" />
+    <Compile Include="Data\DataReaderWrapperForAsync.cs" />
     <Compile Include="Data\DataReaderWrapper.cs" />
     <Compile Include="Data\IParameterMapper.cs" />
     <Compile Include="Data\IResultSetMapper.cs" />
@@ -74,6 +75,7 @@
     <Compile Include="Data\IMapBuilderContext.cs" />
     <Compile Include="Data\IMapBuilderContextMap.cs" />
     <Compile Include="Data\IMapBuilderContextTest.cs" />
+    <Compile Include="Data\RefCountingDataReaderForAsync.cs" />
     <Compile Include="Data\RefCountingDataReader.cs" />
     <Compile Include="Data\ReflectionRowMapper`1.cs" />
     <Compile Include="Data\PropertyMapping.cs" />
