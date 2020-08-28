@@ -339,6 +339,21 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
       }
     }
 
+    private async Task<object> DoExecuteScalarAsync(DbCommand command)
+    {
+        try
+        {
+            DateTime now = DateTime.Now;
+            object obj = await command.ExecuteScalarAsync();
+            this.instrumentationProvider.FireCommandExecutedEvent(now);
+            return obj;
+        }
+        catch (Exception ex)
+        {
+            this.instrumentationProvider.FireCommandFailedEvent(command.CommandText, this.ConnectionStringNoCredentials, ex);
+            throw;
+        }
+    }
     private void DoLoadDataSet(IDbCommand command, DataSet dataSet, string[] tableNames)
     {
       if (tableNames == null)
@@ -683,25 +698,55 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
       }
     }
 
+    public virtual async Task<object> ExecuteScalarAsync(DbCommand command)
+    {
+        if (command == null)
+            throw new ArgumentNullException(nameof(command));
+        using (DatabaseConnectionWrapper openConnection = this.GetOpenConnection())
+        {
+            Database.PrepareCommand(command, openConnection.Connection);
+            return await this.DoExecuteScalarAsync(command);
+        }
+    }
     public virtual object ExecuteScalar(DbCommand command, DbTransaction transaction)
     {
       Database.PrepareCommand(command, transaction);
       return this.DoExecuteScalar((IDbCommand) command);
     }
 
+    public virtual async Task<object> ExecuteScalarAsync(DbCommand command, DbTransaction transaction)
+    {
+        Database.PrepareCommand(command, transaction);
+        return await this.DoExecuteScalarAsync(command);
+    }
+
     public virtual object ExecuteScalar(string storedProcedureName, params object[] parameterValues)
     {
-      using (DbCommand storedProcCommand = this.GetStoredProcCommand(storedProcedureName, parameterValues))
+        using (DbCommand storedProcCommand = this.GetStoredProcCommand(storedProcedureName, parameterValues))
         return this.ExecuteScalar(storedProcCommand);
     }
 
+    public virtual async Task<object> ExecuteScalarAsync(string storedProcedureName, params object[] parameterValues)
+    {
+        using (DbCommand storedProcCommand = this.GetStoredProcCommand(storedProcedureName, parameterValues))
+        return await this.ExecuteScalarAsync(storedProcCommand);
+    }
     public virtual object ExecuteScalar(
       DbTransaction transaction,
       string storedProcedureName,
       params object[] parameterValues)
     {
-      using (DbCommand storedProcCommand = this.GetStoredProcCommand(storedProcedureName, parameterValues))
+        using (DbCommand storedProcCommand = this.GetStoredProcCommand(storedProcedureName, parameterValues))
         return this.ExecuteScalar(storedProcCommand, transaction);
+    }
+
+    public virtual async Task<object> ExecuteScalarAsync(
+        DbTransaction transaction,
+        string storedProcedureName,
+        params object[] parameterValues)
+    {
+        using (DbCommand storedProcCommand = this.GetStoredProcCommand(storedProcedureName, parameterValues))
+        return await this.ExecuteScalarAsync(storedProcCommand, transaction);
     }
 
     public virtual object ExecuteScalar(CommandType commandType, string commandText)
@@ -710,13 +755,28 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
         return this.ExecuteScalar(commandByCommandType);
     }
 
+    public virtual async Task<object> ExecuteScalarAsync(CommandType commandType, string commandText)
+    {
+        using (DbCommand commandByCommandType = this.CreateCommandByCommandType(commandType, commandText))
+        return await this.ExecuteScalarAsync(commandByCommandType);
+    }
+
     public virtual object ExecuteScalar(
       DbTransaction transaction,
       CommandType commandType,
       string commandText)
     {
-      using (DbCommand commandByCommandType = this.CreateCommandByCommandType(commandType, commandText))
+        using (DbCommand commandByCommandType = this.CreateCommandByCommandType(commandType, commandText))
         return this.ExecuteScalar(commandByCommandType, transaction);
+    }
+
+    public virtual async Task<object> ExecuteScalarAsync(
+        DbTransaction transaction,
+        CommandType commandType,
+        string commandText)
+    {
+        using (DbCommand commandByCommandType = this.CreateCommandByCommandType(commandType, commandText))
+        return await this.ExecuteScalarAsync(commandByCommandType, transaction);
     }
 
     public DbDataAdapter GetDataAdapter()
