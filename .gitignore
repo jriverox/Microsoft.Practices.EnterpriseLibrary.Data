@@ -360,5 +360,5 @@ MigrationBackup/
 # End of https://www.toptal.com/developers/gitignore/api/visualstudio
 
 bin/
-lib/
+lib/*.dll
 obj/

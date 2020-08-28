@@ -12,12 +12,5 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
   public abstract class DataAccessor<TResult>
   {
     public abstract IEnumerable<TResult> Execute(params object[] parameterValues);
-
-    public abstract IAsyncResult BeginExecute(
-      AsyncCallback callback,
-      object state,
-      params object[] parameterValues);
-
-    public abstract IEnumerable<TResult> EndExecute(IAsyncResult asyncResult);
   }
 }
