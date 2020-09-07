@@ -496,7 +496,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
 
     public virtual async Task<int> ExecuteNonQueryAsync(DbCommand command)
     {
-        using (DatabaseConnectionWrapper openConnection = this.GetOpenConnection())
+        using (DatabaseConnectionWrapper openConnection = await this.GetOpenConnectionAsync())
         {
             Database.PrepareCommand(command, openConnection.Connection);
             return await this.DoExecuteNonQueryAsync(command);
@@ -518,13 +518,13 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
     public virtual int ExecuteNonQuery(string storedProcedureName, params object[] parameterValues)
     {
         using (DbCommand storedProcCommand = this.GetStoredProcCommand(storedProcedureName, parameterValues))
-        return this.ExecuteNonQuery(storedProcCommand);
+            return this.ExecuteNonQuery(storedProcCommand);
     }
 
     public virtual async Task<int> ExecuteNonQueryAsync(string storedProcedureName, params object[] parameterValues)
     {
         using (DbCommand storedProcCommand = this.GetStoredProcCommand(storedProcedureName, parameterValues))
-        return await this.ExecuteNonQueryAsync(storedProcCommand);
+            return await this.ExecuteNonQueryAsync(storedProcCommand);
     }
 
     public virtual int ExecuteNonQuery(
@@ -542,7 +542,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
         params object[] parameterValues)
     {
         using (DbCommand storedProcCommand = this.GetStoredProcCommand(storedProcedureName, parameterValues))
-        return await this.ExecuteNonQueryAsync(storedProcCommand, transaction);
+            return await this.ExecuteNonQueryAsync(storedProcCommand, transaction);
     }
 
     public virtual int ExecuteNonQuery(CommandType commandType, string commandText)
@@ -554,7 +554,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
     public virtual async Task<int> ExecuteNonQueryAsync(CommandType commandType, string commandText)
     {
         using (DbCommand commandByCommandType = this.CreateCommandByCommandType(commandType, commandText))
-        return await this.ExecuteNonQueryAsync(commandByCommandType);
+            return await this.ExecuteNonQueryAsync(commandByCommandType);
     }
 
     public virtual int ExecuteNonQuery(
@@ -563,7 +563,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
       string commandText)
     {
         using (DbCommand commandByCommandType = this.CreateCommandByCommandType(commandType, commandText))
-        return this.ExecuteNonQuery(commandByCommandType, transaction);
+            return this.ExecuteNonQuery(commandByCommandType, transaction);
     }
 
     public virtual async Task<int> ExecuteNonQueryAsync(
@@ -572,7 +572,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
         string commandText)
     {
         using (DbCommand commandByCommandType = this.CreateCommandByCommandType(commandType, commandText))
-        return await this.ExecuteNonQueryAsync(commandByCommandType, transaction);
+            return await this.ExecuteNonQueryAsync(commandByCommandType, transaction);
     }
     public virtual IDataReader ExecuteReader(DbCommand command)
     {
@@ -586,7 +586,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
 
     public virtual async Task<DbDataReader> ExecuteReaderAsync(DbCommand command)
     {
-        using (DatabaseConnectionWrapper openConnection = this.GetOpenConnection())
+        using (DatabaseConnectionWrapper openConnection = await this.GetOpenConnectionAsync())
         {
             Database.PrepareCommand(command, openConnection.Connection);
             DbDataReader innerReader = await this.DoExecuteReaderAsync(command, CommandBehavior.Default);
@@ -702,7 +702,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
     {
         if (command == null)
             throw new ArgumentNullException(nameof(command));
-        using (DatabaseConnectionWrapper openConnection = this.GetOpenConnection())
+        using (DatabaseConnectionWrapper openConnection = await this.GetOpenConnectionAsync())
         {
             Database.PrepareCommand(command, openConnection.Connection);
             return await this.DoExecuteScalarAsync(command);
@@ -723,13 +723,13 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
     public virtual object ExecuteScalar(string storedProcedureName, params object[] parameterValues)
     {
         using (DbCommand storedProcCommand = this.GetStoredProcCommand(storedProcedureName, parameterValues))
-        return this.ExecuteScalar(storedProcCommand);
+            return this.ExecuteScalar(storedProcCommand);
     }
 
     public virtual async Task<object> ExecuteScalarAsync(string storedProcedureName, params object[] parameterValues)
     {
         using (DbCommand storedProcCommand = this.GetStoredProcCommand(storedProcedureName, parameterValues))
-        return await this.ExecuteScalarAsync(storedProcCommand);
+            return await this.ExecuteScalarAsync(storedProcCommand);
     }
     public virtual object ExecuteScalar(
       DbTransaction transaction,
@@ -817,11 +817,45 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
       return dbConnection;
     }
 
+    private async Task<DbConnection> GetNewOpenConnectionAsync()
+    {
+        DbConnection dbConnection = (DbConnection)null;
+        try
+        {
+            try
+            {
+                dbConnection = this.CreateConnection();
+                await dbConnection.OpenAsync();
+            }
+            catch (Exception ex)
+            {
+                this.instrumentationProvider.FireConnectionFailedEvent(this.ConnectionStringNoCredentials, ex);
+                throw;
+            }
+            this.instrumentationProvider.FireConnectionOpenedEvent();
+        }
+        catch
+        {
+            if (dbConnection != null)
+                dbConnection.Close();
+            throw;
+        }
+        return dbConnection;
+    }
     protected DatabaseConnectionWrapper GetOpenConnection()
     {
       return TransactionScopeConnections.GetConnection(this) ?? this.GetWrappedConnection();
     }
 
+    protected async Task<DatabaseConnectionWrapper> GetOpenConnectionAsync()
+    {
+        return await this.GetWrappedConnectionAsync();
+    }
+    protected async Task<DatabaseConnectionWrapper> GetWrappedConnectionAsync()
+    {
+        DbConnection connection = await this.GetNewOpenConnectionAsync();
+        return new DatabaseConnectionWrapper(connection);
+    }
     protected virtual DatabaseConnectionWrapper GetWrappedConnection()
     {
       return new DatabaseConnectionWrapper(this.GetNewOpenConnection());

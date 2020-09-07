@@ -7,6 +7,7 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Threading.Tasks;
 
 namespace Microsoft.Practices.EnterpriseLibrary.Data
 {
@@ -228,6 +229,10 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
         public virtual bool Read()
         {
             return this.innerReader.Read();
+        }
+        public async virtual Task<bool> ReadAsync()
+        {
+            return await this.innerReader.ReadAsync();
         }
     }
 }
