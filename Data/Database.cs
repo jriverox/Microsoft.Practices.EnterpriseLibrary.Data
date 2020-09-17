@@ -589,7 +589,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
         using (DatabaseConnectionWrapper openConnection = await this.GetOpenConnectionAsync())
         {
             Database.PrepareCommand(command, openConnection.Connection);
-            DbDataReader innerReader = await this.DoExecuteReaderAsync(command, CommandBehavior.Default);
+            DbDataReader innerReader = await this.DoExecuteReaderAsync(command, CommandBehavior.CloseConnection);
 
             return this.CreateWrappedReaderForAsync(openConnection, innerReader);
         }
@@ -620,7 +620,7 @@ namespace Microsoft.Practices.EnterpriseLibrary.Data
         DbTransaction transaction)
     {
         Database.PrepareCommand(command, transaction);
-        return await this.DoExecuteReaderAsync(command, CommandBehavior.Default);
+        return await this.DoExecuteReaderAsync(command, CommandBehavior.CloseConnection);
     }
 
     public IDataReader ExecuteReader(
